@@ -13,14 +13,16 @@ export default function Onboarding() {
   const addSubscription = useStore((state) => state.addSubscription);
   const user = useStore((state) => state.user);
   const [step, setStep] = useState(1);
-  const [subscriptions, setSubscriptions] = useState<Array<{
+  type SubscriptionDraft = {
     name: string;
     category: Category;
     amount: string;
     billingCycle: 'monthly' | 'annual';
     nextRenewalDate: string;
     reminderEnabled: boolean;
-  }>>([
+  };
+
+  const [subscriptions, setSubscriptions] = useState<SubscriptionDraft[]>([
     { name: '', category: 'Streaming', amount: '', billingCycle: 'monthly', nextRenewalDate: '', reminderEnabled: true },
   ]);
 
@@ -37,7 +39,11 @@ export default function Onboarding() {
     setSubscriptions(subscriptions.filter((_, i) => i !== index));
   };
 
-  const handleChange = (index: number, field: string, value: any) => {
+  const handleChange = <K extends keyof SubscriptionDraft>(
+    index: number,
+    field: K,
+    value: SubscriptionDraft[K],
+  ) => {
     const updated = [...subscriptions];
     updated[index] = { ...updated[index], [field]: value };
     setSubscriptions(updated);
@@ -244,5 +250,6 @@ export default function Onboarding() {
     </div>
   );
 }
+
 
 

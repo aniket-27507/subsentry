@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { User, Bell, Globe, Trash2, Sun, Moon } from 'lucide-react';
+
+import { useState, useRef } from 'react';
+import { User, Bell, Globe, Trash2, Sun, Moon, DollarSign, Upload, Download } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useTheme } from '../contexts/ThemeContext';
 import Card from '../components/Card';
@@ -8,13 +9,32 @@ import Select from '../components/Select';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
+import BudgetCard from '../components/BudgetCard';
+import BudgetSetupModal from '../components/BudgetSetupModal';
+import { Budget } from '../types';
+import { exportData, importData } from '../utils/data';
+
 
 export default function Settings() {
-  const { user, logout, setTheme: setUserTheme } = useStore();
+  const {
+    user,
+    logout,
+    setTheme: setUserTheme,
+    budget,
+    setBudget,
+    updateBudget,
+    deleteBudget,
+    getBudgetStatus,
+    getDashboardMetrics,
+    importState,
+    subscriptions,
+  } = useStore();
   const { theme, toggleTheme } = useTheme();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -56,9 +76,56 @@ export default function Settings() {
   };
 
   const handleExportData = () => {
-    setToastMessage('Data export started. You will receive an email shortly.');
+    exportData(user, subscriptions, budget);
+    setToastMessage('Data export started.');
     setShowToast(true);
   };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = await importData(file);
+      importState(data);
+      setToastMessage('Data imported successfully!');
+      setShowToast(true);
+    } catch (error) {
+      setToastMessage('Failed to import data. Invalid file format.');
+      setShowToast(true);
+      console.error(error);
+    }
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleSaveBudget = (data: Omit<Budget, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
+    if (budget) {
+      updateBudget(data);
+      setToastMessage('Budget updated successfully!');
+    } else {
+      setBudget(data);
+      setToastMessage('Budget saved successfully!');
+    }
+    setShowToast(true);
+    setIsBudgetModalOpen(false);
+  };
+
+  const handleDeleteBudget = () => {
+    deleteBudget();
+    setToastMessage('Budget removed.');
+    setShowToast(true);
+  };
+
+  const budgetStatus = getBudgetStatus();
+  const metrics = getDashboardMetrics();
 
   return (
     <div>
@@ -75,7 +142,7 @@ export default function Settings() {
             <User size={24} className="text-primary dark:text-primary-dark" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-dark-text">Profile Information</h2>
           </div>
-          
+
           <form onSubmit={handleSaveProfile} className="space-y-4">
             <Input
               label="Full Name"
@@ -85,7 +152,7 @@ export default function Settings() {
               }
               placeholder="John Doe"
             />
-            
+
             <Input
               type="email"
               label="Email Address"
@@ -114,13 +181,13 @@ export default function Settings() {
               Appearance
             </h2>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
                 Choose between light and dark mode to customize your viewing experience
               </p>
-              
+
               <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-surface-hover border border-gray-200 dark:border-dark-border rounded-lg">
                 <div className="flex items-center gap-3">
                   {theme === 'dark' ? (
@@ -137,20 +204,53 @@ export default function Settings() {
                     </p>
                   </div>
                 </div>
-                
+
                 <button
                   onClick={handleThemeToggle}
                   className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 bg-gray-300 dark:bg-primary-dark"
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      theme === 'dark' ? 'translate-x-6' : 'translate-x-1'
-                    }`}
+                    className={`inline - block h - 4 w - 4 transform rounded - full bg - white transition - transform ${theme === 'dark' ? 'translate-x-6' : 'translate-x-1'
+                      } `}
                   />
                 </button>
               </div>
             </div>
           </div>
+        </Card>
+
+        {/* Budget & Spending */}
+        <Card className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <DollarSign size={24} className="text-primary dark:text-primary-dark" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-dark-text">Budget & Spending</h2>
+          </div>
+
+          {budget ? (
+            <div className="space-y-4">
+              <BudgetCard
+                budgetStatus={budgetStatus}
+                currency={budget.currency}
+                alertThreshold={budget.alertThreshold}
+                onEdit={() => setIsBudgetModalOpen(true)}
+              />
+              <Button variant="danger" onClick={handleDeleteBudget}>
+                Remove Budget
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-gray-700 dark:text-dark-text">
+                  Set monthly and annual budgets to unlock proactive alerts before you overspend.
+                </p>
+                <p className="text-sm text-gray-500 dark:text-dark-text-secondary mt-1">
+                  We'll compare your targets with actual spend every day.
+                </p>
+              </div>
+              <Button onClick={() => setIsBudgetModalOpen(true)}>Create Budget</Button>
+            </div>
+          )}
         </Card>
 
         {/* Notification Preferences */}
@@ -161,7 +261,7 @@ export default function Settings() {
               Default Reminder Settings
             </h2>
           </div>
-          
+
           <form onSubmit={handleSavePreferences} className="space-y-4">
             <Select
               label="Default Reminder Timing"
@@ -222,7 +322,7 @@ export default function Settings() {
             <Globe size={24} className="text-primary dark:text-primary-dark" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-dark-text">Regional Settings</h2>
           </div>
-          
+
           <form onSubmit={handleSavePreferences} className="space-y-4">
             <Select
               label="Currency"
@@ -264,16 +364,30 @@ export default function Settings() {
             <Trash2 size={24} className="text-primary dark:text-primary-dark" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-dark-text">Data & Privacy</h2>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <h3 className="font-medium text-gray-900 dark:text-dark-text mb-2">Export Your Data</h3>
               <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-3">
                 Download a copy of all your subscription data and settings
               </p>
-              <Button onClick={handleExportData} variant="secondary">
-                Export Data
-              </Button>
+              <div className="flex gap-3">
+                <Button onClick={handleExportData} variant="secondary">
+                  <Download size={18} className="mr-2 inline" />
+                  Export Data
+                </Button>
+                <Button onClick={handleImportClick} variant="secondary">
+                  <Upload size={18} className="mr-2 inline" />
+                  Import Data
+                </Button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept=".json"
+                  className="hidden"
+                />
+              </div>
             </div>
 
             <div className="pt-4 border-t border-gray-200 dark:border-dark-border">
@@ -330,6 +444,19 @@ export default function Settings() {
           message={toastMessage}
           type="success"
           onClose={() => setShowToast(false)}
+        />
+      )}
+
+      {isBudgetModalOpen && (
+        <BudgetSetupModal
+          isOpen={isBudgetModalOpen}
+          onClose={() => setIsBudgetModalOpen(false)}
+          onSave={handleSaveBudget}
+          existingBudget={budget ?? undefined}
+          currentSpending={{
+            monthly: metrics.totalMonthlySpend,
+            annual: metrics.totalAnnualSpend,
+          }}
         />
       )}
     </div>

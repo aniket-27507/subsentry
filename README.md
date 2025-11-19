@@ -267,3 +267,4 @@ Built with modern web development best practices and AI-assisted coding tools.
 For questions, issues, or contributions, please open an issue in the repository.
 
 
+

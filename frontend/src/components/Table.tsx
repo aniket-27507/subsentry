@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 interface Column<T> {
   key: string;
@@ -12,20 +13,28 @@ interface TableProps<T> {
   columns: Column<T>[];
   onRowClick?: (item: T) => void;
   emptyMessage?: string;
+  mobileRender?: (item: T, index: number) => ReactNode;
 }
 
-export default function Table<T extends Record<string, any>>({
+export default function Table<T extends Record<string, unknown>>({
   data,
   columns,
   onRowClick,
   emptyMessage = 'No data available',
+  mobileRender,
 }: TableProps<T>) {
+  const isMobile = useIsMobile();
+
   if (data.length === 0) {
     return (
       <div className="bg-white dark:bg-dark-surface rounded-lg border border-gray-200 dark:border-dark-border p-8 text-center">
         <p className="text-gray-500 dark:text-dark-text-secondary">{emptyMessage}</p>
       </div>
     );
+  }
+
+  if (isMobile && mobileRender) {
+    return <div className="space-y-4">{data.map((item, index) => mobileRender(item, index))}</div>;
   }
 
   return (

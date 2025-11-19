@@ -19,7 +19,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         )}
         <select
           ref={ref}
-          className={`w-full px-4 py-2.5 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-primary-dark/20 bg-white dark:bg-dark-surface dark:text-dark-text ${
+          className={`w-full px-4 py-2.5 min-h-[44px] text-base border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-primary-dark/20 bg-white dark:bg-dark-surface dark:text-dark-text ${
             error
               ? 'border-danger dark:border-danger-dark focus:border-danger dark:focus:border-danger-dark'
               : 'border-gray-300 dark:border-dark-border focus:border-primary dark:focus:border-primary-dark'

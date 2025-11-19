@@ -1,6 +1,5 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import Button from '../components/Button';
 import Input from '../components/Input';

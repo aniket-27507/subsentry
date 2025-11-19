@@ -7,6 +7,9 @@ import SpendTrendChart from '../components/SpendTrendChart';
 import CategoryChart from '../components/CategoryChart';
 import EmptyState from '../components/EmptyState';
 import { formatCurrency } from '../utils/format';
+import PullToRefresh from '../components/PullToRefresh';
+import { useCallback } from 'react';
+import MobileChartWrapper from '../components/MobileChartWrapper';
 
 export default function Insights() {
   const navigate = useNavigate();
@@ -24,21 +27,27 @@ export default function Insights() {
   const monthlyTrend = getMonthlySpendTrend();
   const topSubscriptions = getTopExpensiveSubscriptions(3);
   const currency = user?.currencyPreference || '₹';
+  
+  const handleRefresh = useCallback(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }, []);
 
   if (subscriptions.length === 0) {
     return (
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text mb-8">Insights & Reports</h1>
-        <EmptyState
-          icon={<PieChartIcon size={32} />}
-          title="No insights yet"
-          description="Add some subscriptions first to see your spending patterns and insights."
-          action={{
-            label: '+ Add Subscription',
-            onClick: () => navigate('/add'),
-          }}
-        />
-      </div>
+      <PullToRefresh onRefresh={handleRefresh}>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text mb-8">Insights & Reports</h1>
+          <EmptyState
+            icon={<PieChartIcon size={32} />}
+            title="No insights yet"
+            description="Add some subscriptions first to see your spending patterns and insights."
+            action={{
+              label: '+ Add Subscription',
+              onClick: () => navigate('/add'),
+            }}
+          />
+        </div>
+      </PullToRefresh>
     );
   }
 
@@ -52,9 +61,9 @@ export default function Insights() {
   }, 0);
 
   return (
-    <div>
+    <PullToRefresh onRefresh={handleRefresh}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text">Insights & Reports</h1>
           <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
@@ -64,7 +73,7 @@ export default function Insights() {
       </div>
 
       {/* Summary Metrics */}
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-3 mb-8">
         <MetricCard
           title="Monthly Spend"
           value={formatCurrency(metrics.totalMonthlySpend, currency)}
@@ -86,32 +95,36 @@ export default function Insights() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid gap-6 lg:grid-cols-2 mb-8">
         {/* Monthly Trend */}
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-dark-text mb-4">
             Monthly Spend Trend
           </h2>
           <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
             Your subscription spending over the last 12 months
           </p>
-          <SpendTrendChart data={monthlyTrend} currency={currency} />
+          <MobileChartWrapper>
+            {({ height }) => <SpendTrendChart data={monthlyTrend} currency={currency} height={height} />}
+          </MobileChartWrapper>
         </Card>
 
         {/* Category Breakdown */}
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-dark-text mb-4">
             Spend by Category
           </h2>
           <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
             Where your subscription money goes
           </p>
-          <CategoryChart data={categorySpend} currency={currency} />
+          <MobileChartWrapper>
+            {({ height }) => <CategoryChart data={categorySpend} currency={currency} height={height} />}
+          </MobileChartWrapper>
         </Card>
       </div>
 
       {/* Top Expenses */}
-      <Card className="p-6 mb-8">
+      <Card className="p-4 sm:p-6 mb-8">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-dark-text mb-4">
           Top 3 Most Expensive Subscriptions
         </h2>
@@ -131,9 +144,9 @@ export default function Insights() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-dark-text">{sub.name}</h3>
-                    <p className="text-sm text-gray-600 dark:text-dark-text-secondary">
-                      {sub.category} • {sub.billingCycle}
-                    </p>
+                  <p className="text-sm text-gray-600 dark:text-dark-text-secondary">
+                    {sub.category} {'• '} {sub.billingCycle}
+                  </p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -152,7 +165,7 @@ export default function Insights() {
 
       {/* Savings Opportunity */}
       {potentialSavings > 0 && (
-        <Card className="p-6 bg-success/5 dark:bg-success-dark/10 border-success/20 dark:border-success-dark/30">
+        <Card className="p-4 sm:p-6 bg-success/5 dark:bg-success-dark/10 border-success/20 dark:border-success-dark/30">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-full bg-success/10 dark:bg-success-dark/20 flex items-center justify-center">
               <TrendingDown size={24} className="text-success dark:text-success-dark" />
@@ -179,7 +192,6 @@ export default function Insights() {
           </div>
         </Card>
       )}
-    </div>
+    </PullToRefresh>
   );
 }
-
