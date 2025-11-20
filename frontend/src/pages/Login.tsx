@@ -7,11 +7,13 @@ import Input from '../components/Input';
 export default function Login() {
   const navigate = useNavigate();
   const login = useStore((state) => state.login);
+  const loginWithGoogle = useStore((state) => state.loginWithGoogle);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
     // Simple validation
@@ -24,15 +26,29 @@ export default function Login() {
       return;
     }
     
-    // Mock login
-    login(email, password);
-    navigate('/dashboard');
+    setIsLoading(true);
+    try {
+      await login(email, password);
+      // Navigation is handled by App.tsx listening to auth state
+      navigate('/dashboard'); 
+    } catch (error: any) {
+      setErrors({ email: error.message || 'Failed to login' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGoogleLogin = () => {
-    // Mock OAuth - in real app would integrate with provider
-    login('demo@subsentry.com', 'password');
-    navigate('/dashboard');
+  const handleGoogleLogin = async () => {
+    try {
+      setErrors({}); // Clear previous errors
+      console.log('Attempting Google Login...'); // Debug log
+      await loginWithGoogle();
+    } catch (error: any) {
+      console.error('Google Login Error:', error); // Debug log
+      setErrors({ 
+        email: `Login Failed: ${error.message || JSON.stringify(error)}` 
+      });
+    }
   };
 
   return (
@@ -75,8 +91,8 @@ export default function Login() {
               required
             />
 
-            <Button type="submit" variant="primary" fullWidth>
-              Log In
+            <Button type="submit" variant="primary" fullWidth disabled={isLoading}>
+              {isLoading ? 'Logging in...' : 'Log In'}
             </Button>
           </form>
 
@@ -133,4 +149,3 @@ export default function Login() {
     </div>
   );
 }
-

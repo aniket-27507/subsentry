@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useStore } from './store/useStore';
 import Layout from './components/Layout';
@@ -14,15 +15,29 @@ import Settings from './pages/Settings';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const isLoading = useStore((state) => state.isLoading);
+
+  if (isLoading) return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const isLoading = useStore((state) => state.isLoading);
+
+  if (isLoading) return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+
   return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" />;
 }
 
 function App() {
+  const initializeAuth = useStore((state) => state.initializeAuth);
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
   return (
     <BrowserRouter>
       <Routes>

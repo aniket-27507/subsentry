@@ -7,12 +7,14 @@ import Input from '../components/Input';
 export default function Signup() {
   const navigate = useNavigate();
   const signup = useStore((state) => state.signup);
+  const loginWithGoogle = useStore((state) => state.loginWithGoogle);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
     // Simple validation
@@ -27,15 +29,24 @@ export default function Signup() {
       return;
     }
     
-    // Mock signup
-    signup(email, password, name);
-    navigate('/onboarding');
+    setIsLoading(true);
+    try {
+      await signup(email, password, name);
+      // App.tsx will handle redirection if auth state updates, or:
+      navigate('/onboarding');
+    } catch (error: any) {
+      setErrors({ email: error.message || 'Failed to sign up' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGoogleSignup = () => {
-    // Mock OAuth
-    signup('demo@subsentry.com', 'password', 'Demo User');
-    navigate('/onboarding');
+  const handleGoogleSignup = async () => {
+    try {
+      await loginWithGoogle();
+    } catch (error: any) {
+      setErrors({ email: error.message || 'Failed to sign up with Google' });
+    }
   };
 
   return (
@@ -89,8 +100,8 @@ export default function Signup() {
               required
             />
 
-            <Button type="submit" variant="primary" fullWidth>
-              Create Account
+            <Button type="submit" variant="primary" fullWidth disabled={isLoading}>
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </Button>
           </form>
 
@@ -147,5 +158,3 @@ export default function Signup() {
     </div>
   );
 }
-
-

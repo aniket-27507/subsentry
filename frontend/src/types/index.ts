@@ -1,5 +1,5 @@
 export type BillingCycle = 'monthly' | 'annual' | 'custom';
-export type SubscriptionStatus = 'active' | 'cancelled';
+export type SubscriptionStatus = 'active' | 'cancelled' | 'trial';
 export type Category = 'Streaming' | 'SaaS' | 'Fitness' | 'Utilities' | 'Other';
 export type PaymentMethod = 'Credit Card' | 'Debit Card' | 'UPI' | 'Bank Transfer' | 'Other';
 export type QuickAddSource = 'manual' | 'template' | 'recent' | 'duplicate';
@@ -46,6 +46,7 @@ export interface Subscription {
   paymentMethod: PaymentMethod;
   notes: string;
   status: SubscriptionStatus;
+  trialEndDate?: string;
   reminderEnabled: boolean;
   reminderDaysBefore: number;
   createdAt: string;

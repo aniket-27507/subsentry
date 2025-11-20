@@ -44,11 +44,12 @@ export default function AddEditSubscription() {
     billingCycle: draft.billingCycle,
     firstPaymentDate: draft.firstPaymentDate || '',
     nextRenewalDate: draft.nextRenewalDate || '',
+    trialEndDate: draft.trialEndDate || '',
     paymentMethod: draft.paymentMethod,
     notes: draft.notes || '',
     reminderEnabled: draft.reminderEnabled,
     reminderDaysBefore: draft.reminderDaysBefore,
-    status: 'active' as const,
+    status: draft.status || 'active',
   });
 
   const createInitialFormState = () => {
@@ -61,6 +62,7 @@ export default function AddEditSubscription() {
         billingCycle: existingSubscription.billingCycle,
         firstPaymentDate: existingSubscription.firstPaymentDate,
         nextRenewalDate: existingSubscription.nextRenewalDate,
+        trialEndDate: existingSubscription.trialEndDate || '',
         paymentMethod: existingSubscription.paymentMethod,
         notes: existingSubscription.notes,
         reminderEnabled: existingSubscription.reminderEnabled,
@@ -81,6 +83,7 @@ export default function AddEditSubscription() {
       billingCycle: 'monthly' as 'monthly' | 'annual' | 'custom',
       firstPaymentDate: '',
       nextRenewalDate: '',
+      trialEndDate: '',
       paymentMethod: 'Credit Card' as PaymentMethod,
       notes: '',
       reminderEnabled: true,
@@ -289,8 +292,13 @@ export default function AddEditSubscription() {
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
       newErrors.amount = 'Amount must be greater than 0';
     }
-    if (!formData.nextRenewalDate) newErrors.nextRenewalDate = 'Next renewal date is required';
-    if (!formData.firstPaymentDate) newErrors.firstPaymentDate = 'First payment date is required';
+    
+    if (formData.status === 'trial') {
+      if (!formData.trialEndDate) newErrors.trialEndDate = 'Trial end date is required';
+    } else {
+      if (!formData.nextRenewalDate) newErrors.nextRenewalDate = 'Next renewal date is required';
+      if (!formData.firstPaymentDate) newErrors.firstPaymentDate = 'First payment date is required';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -307,8 +315,9 @@ export default function AddEditSubscription() {
       amount: parseFloat(formData.amount),
       currency: formData.currency,
       billingCycle: formData.billingCycle,
-      firstPaymentDate: formData.firstPaymentDate,
-      nextRenewalDate: formData.nextRenewalDate,
+      firstPaymentDate: formData.status === 'trial' ? '' : formData.firstPaymentDate,
+      nextRenewalDate: formData.status === 'trial' ? '' : formData.nextRenewalDate,
+      trialEndDate: formData.status === 'trial' ? formData.trialEndDate : '',
       paymentMethod: formData.paymentMethod,
       notes: formData.notes,
       status: formData.status,
@@ -580,6 +589,18 @@ export default function AddEditSubscription() {
                 />
 
                 <Select
+                  label="Status"
+                  value={formData.status}
+                  onChange={(e) => handleChange('status', e.target.value as any)}
+                  options={[
+                    { value: 'active', label: 'Active' },
+                    { value: 'trial', label: 'Trial' },
+                    { value: 'cancelled', label: 'Cancelled' },
+                  ]}
+                  required
+                />
+
+                <Select
                   label="Payment Method"
                   value={formData.paymentMethod}
                   onChange={(e) => handleChange('paymentMethod', e.target.value as PaymentMethod)}
@@ -601,16 +622,33 @@ export default function AddEditSubscription() {
                 Billing Details
               </h2>
               <div className="grid gap-4 md:grid-cols-2">
-                <Input
-                  type="number"
-                  label="Amount"
-                  placeholder="649"
-                  value={formData.amount}
-                  onChange={(e) => handleChange('amount', e.target.value)}
-                  error={errors.amount}
-                  helperText={`Amount in ${formData.currency}`}
-                  required
-                />
+                <div className="flex gap-3">
+                  <div className="w-1/3">
+                     <Select
+                        label="Currency"
+                        value={formData.currency}
+                        onChange={(e) => handleChange('currency', e.target.value)}
+                        options={[
+                            { value: '₹', label: '₹ INR' },
+                            { value: '$', label: '$ USD' },
+                            { value: '€', label: '€ EUR' },
+                            { value: '£', label: '£ GBP' },
+                        ]}
+                        required
+                     />
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                        type="number"
+                        label="Amount"
+                        placeholder="649"
+                        value={formData.amount}
+                        onChange={(e) => handleChange('amount', e.target.value)}
+                        error={errors.amount}
+                        required
+                    />
+                  </div>
+                </div>
 
                 <Select
                   label="Billing Cycle"
@@ -626,25 +664,41 @@ export default function AddEditSubscription() {
                   required
                 />
 
-                <Input
-                  type="date"
-                  label="First Payment Date"
-                  value={formData.firstPaymentDate}
-                  onChange={(e) => handleChange('firstPaymentDate', e.target.value)}
-                  error={errors.firstPaymentDate}
-                  helperText="When did you first subscribe?"
-                  required
-                />
+                {formData.status === 'trial' ? (
+                   <div className="md:col-span-2">
+                     <Input
+                       type="date"
+                       label="Trial Ending Date"
+                       value={formData.trialEndDate}
+                       onChange={(e) => handleChange('trialEndDate', e.target.value)}
+                       error={errors.trialEndDate}
+                       helperText="We'll remind you before the trial ends so you can cancel if needed."
+                       required
+                     />
+                   </div>
+                ) : (
+                  <>
+                    <Input
+                      type="date"
+                      label="First Payment Date"
+                      value={formData.firstPaymentDate}
+                      onChange={(e) => handleChange('firstPaymentDate', e.target.value)}
+                      error={errors.firstPaymentDate}
+                      helperText="When did you first subscribe?"
+                      required
+                    />
 
-                <Input
-                  type="date"
-                  label="Next Renewal Date"
-                  value={formData.nextRenewalDate}
-                  onChange={(e) => handleChange('nextRenewalDate', e.target.value)}
-                  error={errors.nextRenewalDate}
-                  helperText="When will you be charged next?"
-                  required
-                />
+                    <Input
+                      type="date"
+                      label="Next Renewal Date"
+                      value={formData.nextRenewalDate}
+                      onChange={(e) => handleChange('nextRenewalDate', e.target.value)}
+                      error={errors.nextRenewalDate}
+                      helperText="When will you be charged next?"
+                      required
+                    />
+                  </>
+                )}
               </div>
             </div>
 

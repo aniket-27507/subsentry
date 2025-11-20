@@ -24,6 +24,7 @@ export default function Settings() {
     setBudget,
     updateBudget,
     deleteBudget,
+    updateUserPreferences,
     getBudgetStatus,
     getDashboardMetrics,
     importState,
@@ -62,11 +63,21 @@ export default function Settings() {
     setShowToast(true);
   };
 
-  const handleSavePreferences = (e: React.FormEvent) => {
+  const handleSavePreferences = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock save
-    setToastMessage('Preferences saved successfully!');
-    setShowToast(true);
+    try {
+      await updateUserPreferences({
+        currencyPreference: preferencesData.currency,
+        timezone: preferencesData.timezone,
+        defaultReminderDays: preferencesData.defaultReminderDays,
+      });
+      setToastMessage('Preferences saved successfully!');
+      setShowToast(true);
+    } catch (error) {
+      console.error('Failed to save preferences:', error);
+      setToastMessage('Failed to save preferences. Please try again.');
+      setShowToast(true);
+    }
   };
 
   const handleDeleteAccount = () => {
