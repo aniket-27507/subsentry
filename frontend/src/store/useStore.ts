@@ -17,7 +17,6 @@ import {
   Budget,
   BudgetStatus,
   BudgetAlert,
-  SubscriptionStatus,
 } from '../types';
 import { subscriptionTemplates } from './mockData';
 import { calculateBudgetStatus } from '../utils/budget';
@@ -333,13 +332,6 @@ export const useStore = create<AppState>((set, get) => ({
   addSubscription: async (subscriptionData, options) => {
     const user = get().user;
     if (!user) return;
-
-    const newSubscription = {
-      ...subscriptionData,
-      user_id: user.id,
-      // Supabase will handle ID and timestamps if we omit them, or we can send them?
-      // Let's let Supabase generate ID
-    };
 
     // Convert CamelCase to snake_case for DB if needed, or mapping? 
     // Ideally we map fields. For now assuming DB columns match snake_case but Types match camelCase?
@@ -759,23 +751,7 @@ export const useStore = create<AppState>((set, get) => ({
 
     const updates: any = {};
     if (preferences.currencyPreference) updates.currency_preference = preferences.currencyPreference;
-    if (preferences.timezone) updates.timezone = preferences.timezone; // Assuming timezone column exists or will be added? 
-    // Note: 'timezone' and 'defaultReminderDays' are not in the profiles table definition I saw earlier.
-    // Let's check supabase_schema.sql again. 
-    // It only had: email, full_name, currency_preference, theme.
-    // So I should only update currency_preference for now, or adding them to schema is out of scope for this "quick fix".
-    // However, the user wants it to change when user changes settings.
-    // The settings page has timezone and defaultReminderDays. 
-    // I will assume they might be stored in metadata or I should update schema?
-    // For this specific request "currency defaulted to rupees", I will focus on currency_preference.
-    
-    // Wait, if I only update currency_preference, the others won't persist.
-    // Let's check if I can save them. 
-    // The prompt says "there should be option to choose currency... default ... rupees ... fix it".
-    // It doesn't explicitly ask to implement timezone persistence if it wasn't there.
-    // But `useStore` defines User with timezone.
-    
-    // Let's update what we can.
+    if (preferences.timezone) updates.timezone = preferences.timezone; 
     
     const { error } = await supabase
       .from('profiles')

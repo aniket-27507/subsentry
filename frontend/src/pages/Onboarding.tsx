@@ -179,7 +179,7 @@ export default function Onboarding() {
                   <Select
                     label="Category"
                     value={sub.category}
-                    onChange={(e) => handleChange(index, 'category', e.target.value)}
+                    onChange={(e) => handleChange(index, 'category', e.target.value as Category)}
                     options={categories.map(c => ({ value: c, label: c }))}
                     required
                   />
@@ -196,7 +196,7 @@ export default function Onboarding() {
                   <Select
                     label="Billing Cycle"
                     value={sub.billingCycle}
-                    onChange={(e) => handleChange(index, 'billingCycle', e.target.value)}
+                    onChange={(e) => handleChange(index, 'billingCycle', e.target.value as 'monthly' | 'annual')}
                     options={[
                       { value: 'monthly', label: 'Monthly' },
                       { value: 'annual', label: 'Annual' },
@@ -250,7 +250,3 @@ export default function Onboarding() {
     </div>
   );
 }
-
-
-
-

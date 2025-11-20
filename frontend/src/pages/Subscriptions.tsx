@@ -260,14 +260,14 @@ export default function Subscriptions() {
     showToast('Subscriptions refreshed', 'info');
   }, [showToast]);
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (
       selectedVisibleIds.length === 0 ||
       !window.confirm('Delete selected subscriptions? This action cannot be undone.')
     ) {
       return;
     }
-    const result = bulkDeleteSubscriptions(selectedVisibleIds);
+    const result = await bulkDeleteSubscriptions(selectedVisibleIds);
     setSelectedIds((prev) => prev.filter((id) => !selectedVisibleSet.has(id)));
     showToast(
       `Deleted ${result.success} subscription${result.success === 1 ? '' : 's'}`,
@@ -275,9 +275,9 @@ export default function Subscriptions() {
     );
   };
 
-  const handleBulkCancel = () => {
+  const handleBulkCancel = async () => {
     if (selectedVisibleIds.length === 0) return;
-    const result = bulkCancelSubscriptions(selectedVisibleIds);
+    const result = await bulkCancelSubscriptions(selectedVisibleIds);
     showToast(
       `Marked ${result.success} subscription${result.success === 1 ? '' : 's'} as cancelled`,
       result.failed > 0 ? 'warning' : 'success'
@@ -287,9 +287,9 @@ export default function Subscriptions() {
     }
   };
 
-  const handleBulkToggleReminders = (enabled: boolean) => {
+  const handleBulkToggleReminders = async (enabled: boolean) => {
     if (selectedVisibleIds.length === 0) return;
-    const result = bulkToggleReminders(selectedVisibleIds, enabled);
+    const result = await bulkToggleReminders(selectedVisibleIds, enabled);
     showToast(
       `${enabled ? 'Enabled' : 'Disabled'} reminders for ${result.success} subscription${
         result.success === 1 ? '' : 's'
@@ -298,12 +298,12 @@ export default function Subscriptions() {
     );
   };
 
-  const handleBulkEditSave = (
+  const handleBulkEditSave = async (
     updates: Partial<{ category: Category; paymentMethod: PaymentMethod }>
   ) => {
     if (Object.keys(updates).length === 0) return;
     if (selectedVisibleIds.length === 0) return;
-    const result = bulkUpdateSubscriptions(selectedVisibleIds, updates);
+    const result = await bulkUpdateSubscriptions(selectedVisibleIds, updates);
     showToast(
       `Updated ${result.success} subscription${result.success === 1 ? '' : 's'}`,
       result.failed > 0 ? 'warning' : 'success'
@@ -323,13 +323,13 @@ export default function Subscriptions() {
     setQuickFilter(null);
   };
 
-  const handleToggleReminder = (id: string, enabled: boolean) => {
-    updateSubscription(id, { reminderEnabled: enabled });
+  const handleToggleReminder = async (id: string, enabled: boolean) => {
+    await updateSubscription(id, { reminderEnabled: enabled });
     showToast(`Reminder ${enabled ? 'enabled' : 'disabled'}`, 'success');
   };
 
-  const handleSingleCancel = (id: string) => {
-    const result = bulkCancelSubscriptions([id]);
+  const handleSingleCancel = async (id: string) => {
+    const result = await bulkCancelSubscriptions([id]);
     if (result.success > 0) {
       showToast('Subscription marked as cancelled', 'success');
     } else {

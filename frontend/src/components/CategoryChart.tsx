@@ -37,7 +37,7 @@ export default function CategoryChart({ data, currency = '₹', height }: Catego
           cx="50%"
           cy="50%"
           labelLine={!isMobile}
-          label={(props: { category: string; percentage: number }) =>
+          label={(props: any) =>
             isMobile ? `${props.percentage}%` : `${props.category} (${props.percentage}%)`
           }
           outerRadius={outerRadius}
@@ -72,4 +72,3 @@ export default function CategoryChart({ data, currency = '₹', height }: Catego
     </ResponsiveContainer>
   );
 }
-
