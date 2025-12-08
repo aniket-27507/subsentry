@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, Bell, BellOff, Calendar } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Bell, BellOff, Calendar, Slash } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import CancelHelperModal from '../components/CancelHelperModal';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Badge from '../components/Badge';
@@ -17,6 +18,7 @@ export default function SubscriptionDetail() {
   
   const subscription = id ? getSubscriptionById(id) : null;
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showCancelHelperModal, setShowCancelHelperModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const currency = user?.currencyPreference || '₹';
@@ -265,10 +267,29 @@ export default function SubscriptionDetail() {
                   Mark as Cancelled
                 </Button>
               )}
+              {subscription.status === 'active' && (
+                <Button
+                  onClick={() => setShowCancelHelperModal(true)}
+                  variant="secondary"
+                  fullWidth
+                >
+                  <Slash size={18} className="inline mr-2" />
+                  Help Me Cancel
+                </Button>
+              )}
             </div>
           </Card>
         </div>
       </div>
+
+      {/* Cancellation Helper Modal */}
+      {subscription && (
+        <CancelHelperModal
+          isOpen={showCancelHelperModal}
+          onClose={() => setShowCancelHelperModal(false)}
+          subscriptionName={subscription.name}
+        />
+      )}
 
       {/* Delete Confirmation Modal */}
       <Modal
